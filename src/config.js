@@ -28,6 +28,8 @@ export const PRECIOS_VARIANTES = {
   A: { entrada: 8000, combo: 10000 },
   B: { entrada: 10000, combo: 12500 },
   C: { entrada: 12000, combo: 15000 },
+  D: { entrada: 15000, combo: 18000 },
+  E: { entrada: 18000, combo: 22000 },
 }
 
 export const LOCALIDADES = [

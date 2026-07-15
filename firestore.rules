@@ -116,7 +116,7 @@ service cloud.firestore {
         && (!affected('survey') || surveyOk(request.resource.data.survey))
         && (!affected('localidad') || localidadOk(request.resource.data.localidad))
         && (!affected('localidad_detalle') || str(request.resource.data.localidad_detalle, 60))
-        && (!affected('precio_variante') || request.resource.data.precio_variante in ['A', 'B', 'C']);
+        && (!affected('precio_variante') || request.resource.data.precio_variante in ['A', 'B', 'C', 'D', 'E']);
 
       allow delete: if false;
     }
