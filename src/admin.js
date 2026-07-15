@@ -5,7 +5,7 @@ import {
   collection, query, where, getDocs, getCountFromServer, Timestamp,
 } from 'firebase/firestore'
 import { app, db } from './firebase.js'
-import { UMBRALES, ENCUESTA, EXTRAS, LOCALIDADES, CREATIVIDADES } from './config.js'
+import { UMBRALES, ENCUESTA, EXTRAS, LOCALIDADES, CREATIVIDADES, PRECIOS_VARIANTES } from './config.js'
 
 const auth = getAuth(app)
 if (location.hostname === 'localhost' && new URLSearchParams(location.search).has('emu')) {
@@ -80,7 +80,7 @@ async function cargarDashboard() {
   ])
 
   initCpl()
-  await Promise.all([renderCurvas(), renderExtras(), renderLocalidades()])
+  await Promise.all([renderCurvas(), renderVariantes(), renderExtras(), renderLocalidades()])
   $('#btn-soporte').addEventListener('click', cargarSoporte, { once: true })
 }
 
@@ -193,6 +193,24 @@ function lineChart(container, points, color) {
   })
 }
 
+// ── Elasticidad: intención de pago por variante de precio ───────────────────
+async function renderVariantes() {
+  const fmtAr = (n) => `$${n.toLocaleString('es-AR')}`
+  const items = await Promise.all(Object.entries(PRECIOS_VARIANTES).map(async ([v, p]) => {
+    const [vieron, clickearon] = await Promise.all([
+      count('sessions', where('precio_variante', '==', v), where('vio_precio', '==', true)),
+      count('sessions', where('precio_variante', '==', v), where('cta_precio', '==', true)),
+    ])
+    return { v, p, vieron, clickearon }
+  }))
+  $('#kpis-variantes').innerHTML = items.map(({ v, p, vieron, clickearon }) => `
+    <div class="kpi">
+      <div class="kpi__nombre">Variante ${v} · entrada ${fmtAr(p.entrada)} / combo ${fmtAr(p.combo)}</div>
+      <div class="kpi__valor">${vieron ? pct(clickearon / vieron) : '—'}</div>
+      <div class="kpi__detalle">${clickearon} de ${vieron} que vieron el precio</div>
+    </div>`).join('')
+}
+
 // ── Barras: extras y localidades ────────────────────────────────────────────
 function barras(container, filas) {
   const max = Math.max(1, ...filas.map((f) => f.valor))
@@ -276,15 +294,16 @@ async function cargarSoporte() {
 }
 
 function descargarCsv() {
-  const filas = [['founder', 'nombre', 'whatsapp', 'localidad', 'fecha', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'frecuencia', 'compania', 'horario', 'genero', 'extras']]
+  const multi = (v) => (Array.isArray(v) ? v.join('|') : v || '')
+  const filas = [['founder', 'nombre', 'whatsapp', 'localidad', 'ciudad_detalle', 'fecha', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'frecuencia', 'compania', 'horario', 'genero', 'extras']]
   for (const r of [...registrosDocs].sort((a, b) => (a.founderNumber || 0) - (b.founderNumber || 0))) {
     const resp = r.respuestas || {}
     filas.push([
-      r.founderNumber, r.nombre, r.whatsapp, r.localidad,
+      r.founderNumber, r.nombre, r.whatsapp, r.localidad, r.localidad_detalle || '',
       r.ts?.toDate ? r.ts.toDate().toLocaleString('es-AR') : '',
       r.utm_source || '', r.utm_medium || '', r.utm_campaign || '', r.utm_content || '',
-      resp.frecuencia || '', resp.compania || '', resp.horario || '', resp.genero || '',
-      (resp.extras || []).join('|'),
+      resp.frecuencia || '', multi(resp.compania), multi(resp.horario), multi(resp.genero),
+      multi(resp.extras),
     ])
   }
   const csv = '\uFEFF' + filas.map((f) => f.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n')

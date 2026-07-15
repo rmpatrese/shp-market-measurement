@@ -22,17 +22,23 @@ service cloud.firestore {
     }
 
     function localidadOk(v) {
-      return v in ['oran', 'pichanal', 'hipolito_yrigoyen', 'colonia_santa_rosa', 'otro'];
+      return v in ['oran', 'pichanal', 'hipolito_yrigoyen', 'colonia_santa_rosa',
+                   'embarcacion', 'tartagal', 'gral_mosconi', 'aguas_blancas', 'otro'];
+    }
+
+    // compania/horario/genero son multi-select (listas); frecuencia es simple
+    function multiOk(v) {
+      return v is list && v.size() <= 6;
     }
 
     function surveyOk(s) {
       return s is map
         && s.keys().hasOnly(['frecuencia', 'compania', 'horario', 'genero', 'extras'])
         && (!('frecuencia' in s) || str(s.frecuencia, 30))
-        && (!('compania' in s) || str(s.compania, 30))
-        && (!('horario' in s) || str(s.horario, 30))
-        && (!('genero' in s) || str(s.genero, 30))
-        && (!('extras' in s) || (s.extras is list && s.extras.size() <= 8));
+        && (!('compania' in s) || multiOk(s.compania))
+        && (!('horario' in s) || multiOk(s.horario))
+        && (!('genero' in s) || multiOk(s.genero))
+        && (!('extras' in s) || (s.extras is list && s.extras.size() <= 12));
     }
 
     // ── Contador público de fundadores ────────────────────────────────────
@@ -102,12 +108,15 @@ service cloud.firestore {
 
       allow update: if affectedOnly(
           ['seconds', 'scroll_50', 'scroll_75', 'scroll_100', 'vio_precio',
-           'cta_hero', 'cta_precio', 'shared', 'submitted', 'survey', 'localidad'])
+           'cta_hero', 'cta_precio', 'shared', 'submitted', 'survey', 'localidad',
+           'localidad_detalle', 'precio_variante'])
         && secondsOk() && boolUp('scroll_50') && boolUp('scroll_75')
         && boolUp('scroll_100') && boolUp('vio_precio') && boolUp('cta_hero')
         && boolUp('cta_precio') && boolUp('shared') && boolUp('submitted')
         && (!affected('survey') || surveyOk(request.resource.data.survey))
-        && (!affected('localidad') || localidadOk(request.resource.data.localidad));
+        && (!affected('localidad') || localidadOk(request.resource.data.localidad))
+        && (!affected('localidad_detalle') || str(request.resource.data.localidad_detalle, 60))
+        && (!affected('precio_variante') || request.resource.data.precio_variante in ['A', 'B', 'C']);
 
       allow delete: if false;
     }
@@ -121,11 +130,13 @@ service cloud.firestore {
       // duplicados sin permitir leer registros ajenos.
       allow create: if whatsapp.matches('^\\+549[0-9]{10}$')
         && request.resource.data.keys().hasOnly(
-          ['nombre', 'whatsapp', 'localidad', 'respuestas', 'founderNumber',
+          ['nombre', 'whatsapp', 'localidad', 'localidad_detalle', 'respuestas', 'founderNumber',
            'session_id', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ts'])
         && str(request.resource.data.nombre, 80)
         && request.resource.data.whatsapp == whatsapp
         && localidadOk(request.resource.data.localidad)
+        && (!('localidad_detalle' in request.resource.data)
+            || str(request.resource.data.localidad_detalle, 60))
         && surveyOk(request.resource.data.respuestas)
         && request.resource.data.founderNumber is int
         && request.resource.data.founderNumber > 0

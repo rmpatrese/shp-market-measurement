@@ -22,9 +22,12 @@ export const GA4_ID = 'G-XXXXXXXXXX'
 export const META_PIXEL_ID = 'XXXXXXXXXXXXXXX'
 
 // ⚠️ PRECIOS DE REFERENCIA — reemplazar por los definitivos antes de lanzar.
-export const PRECIOS = {
-  entrada: 8000,
-  combo: 10000,
+// Test de elasticidad: cada sesión ve UNA variante al azar; el admin compara
+// la intención de pago por variante.
+export const PRECIOS_VARIANTES = {
+  A: { entrada: 8000, combo: 10000 },
+  B: { entrada: 10000, combo: 12500 },
+  C: { entrada: 12000, combo: 15000 },
 }
 
 export const LOCALIDADES = [
@@ -32,13 +35,28 @@ export const LOCALIDADES = [
   { id: 'pichanal', label: 'Pichanal' },
   { id: 'hipolito_yrigoyen', label: 'H. Yrigoyen' },
   { id: 'colonia_santa_rosa', label: 'C. Santa Rosa' },
-  { id: 'otro', label: 'Otro' },
+  { id: 'embarcacion', label: 'Embarcación' },
+  { id: 'tartagal', label: 'Tartagal' },
+  { id: 'gral_mosconi', label: 'G. Mosconi' },
+  { id: 'aguas_blancas', label: 'Aguas Blancas' },
+  { id: 'otro', label: 'Otra ciudad' },
 ]
 
+// Cuando eligen "Otra ciudad": selector de ciudades de Salta
+export const OTRAS_CIUDADES = [
+  'Salta Capital', 'Gral. Güemes', 'Metán', 'Rosario de la Frontera',
+  'J. V. González', 'Las Lajitas', 'Cafayate', 'Rosario de Lerma',
+  'Cerrillos', 'El Carril', 'Chicoana', 'Cachi', 'Rivadavia',
+  'Santa Victoria Este', 'Otra de Salta', 'Fuera de Salta',
+]
+
+// `multi: true` → se pueden elegir varias. Frecuencia queda simple porque las
+// opciones son excluyentes y alimenta el KPI "frecuencia ≥ 1×/mes".
 export const ENCUESTA = [
   {
     q: 'frecuencia',
     titulo: '¿Cada cuánto irías?',
+    multi: false,
     opciones: [
       { id: '1xsem', label: '1 vez por semana' },
       { id: '2xmes', label: '2 veces al mes' },
@@ -49,31 +67,34 @@ export const ENCUESTA = [
   {
     q: 'compania',
     titulo: '¿Con quién irías?',
+    multi: true,
     opciones: [
-      { id: 'familia', label: 'Familia con chicos' },
-      { id: 'pareja', label: 'En pareja' },
-      { id: 'amigos', label: 'Con amigos' },
-      { id: 'solo', label: 'Solo/a' },
+      { id: 'familia', label: '👨‍👩‍👧 Familia con chicos' },
+      { id: 'pareja', label: '💞 En pareja' },
+      { id: 'amigos', label: '🍻 Con amigos' },
+      { id: 'solo', label: '🙋 Solo/a' },
     ],
   },
   {
     q: 'horario',
     titulo: '¿En qué horario?',
+    multi: true,
     opciones: [
-      { id: 'matine', label: 'Matiné' },
-      { id: 'tarde', label: 'Tarde' },
-      { id: 'noche', label: 'Noche' },
-      { id: 'trasnoche', label: 'Trasnoche finde' },
+      { id: 'matine', label: '☀️ Matiné' },
+      { id: 'tarde', label: '🌆 Tarde' },
+      { id: 'noche', label: '🌙 Noche' },
+      { id: 'trasnoche', label: '🌃 Trasnoche finde' },
     ],
   },
   {
     q: 'genero',
     titulo: '¿Qué película te mueve?',
+    multi: true,
     opciones: [
-      { id: 'estreno_tanque', label: 'Acción / estreno tanque' },
-      { id: 'infantil', label: 'Infantil' },
-      { id: 'terror', label: 'Terror' },
-      { id: 'cine_argentino', label: 'Cine argentino' },
+      { id: 'estreno_tanque', label: '💥 Acción / estreno tanque' },
+      { id: 'infantil', label: '🧒 Infantil' },
+      { id: 'terror', label: '👻 Terror' },
+      { id: 'cine_argentino', label: '🇦🇷 Cine argentino' },
     ],
   },
 ]
@@ -84,12 +105,15 @@ export const EXTRAS = {
   titulo: '¿Qué más te gustaría que haya?',
   subtitulo: 'Podés elegir varias — nos ayuda a pensar el lugar completo.',
   opciones: [
-    { id: 'bowling', label: 'Bowling' },
-    { id: 'juegos', label: 'Juegos tipo Sacoa / Neverland' },
-    { id: 'patio_comidas', label: 'Patio de comidas' },
-    { id: 'cafeteria', label: 'Cafetería / heladería' },
-    { id: 'salon_eventos', label: 'Salón para cumples y eventos' },
-    { id: 'solo_cine', label: 'Con el cine me alcanza' },
+    { id: 'bowling', label: '🎳 Bowling' },
+    { id: 'juegos', label: '🕹️ Juegos tipo Sacoa / Neverland' },
+    { id: 'patio_comidas', label: '🍔 Patio de comidas' },
+    { id: 'cafeteria', label: '☕ Cafetería / heladería' },
+    { id: 'salon_eventos', label: '🎉 Salón para cumples y eventos' },
+    { id: 'tiendas_ropa', label: '👕 Tiendas de ropa' },
+    { id: 'supermercado', label: '🛒 Supermercado' },
+    { id: 'farmacia', label: '💊 Farmacia' },
+    { id: 'solo_cine', label: '🎬 Con el cine me alcanza' },
   ],
 }
 

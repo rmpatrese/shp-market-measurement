@@ -1,6 +1,7 @@
 // ── Registro: nombre + WhatsApp (AR) + localidad → transacción con counter ─
 import { doc, runTransaction, serverTimestamp } from 'firebase/firestore'
 import { db } from './firebase.js'
+import { LOCALIDADES, OTRAS_CIUDADES } from './config.js'
 import { sessionId, trackEvent, flagSession, updateSession, analyticsEvent } from './tracking.js'
 import { respuestas, extrasElegidos } from './survey.js'
 
@@ -27,12 +28,24 @@ export function normalizarWhatsApp(input) {
 
 export function initForm({ form, onSuccess }) {
   let localidad = null
+
+  // Chips de localidad y selector de "otra ciudad" desde config
+  const contChips = form.querySelector('#chips-localidad')
+  contChips.innerHTML = LOCALIDADES.map(
+    (l) => `<button type="button" class="chip" data-localidad="${l.id}">${l.label}</button>`,
+  ).join('')
+  form.querySelector('#ciudad-select').innerHTML =
+    '<option value="" selected disabled>Elegí tu ciudad…</option>' +
+    OTRAS_CIUDADES.map((c) => `<option value="${c}">${c}</option>`).join('')
+
   const chips = form.querySelectorAll('.chip[data-localidad]')
+  const ciudadWrap = form.querySelector('#ciudad-otra')
   chips.forEach((chip) => {
     chip.addEventListener('click', () => {
       chips.forEach((c) => c.classList.remove('chip--on'))
       chip.classList.add('chip--on')
       localidad = chip.dataset.localidad
+      ciudadWrap.hidden = localidad !== 'otro'
       form.querySelector('#error-localidad').textContent = ''
     })
   })
@@ -62,6 +75,11 @@ export function initForm({ form, onSuccess }) {
       errLoc.textContent = 'Elegí tu localidad'
       ok = false
     }
+    const localidadDetalle = localidad === 'otro' ? form.querySelector('#ciudad-select').value : null
+    if (localidad === 'otro' && !localidadDetalle) {
+      errLoc.textContent = 'Elegí tu ciudad de la lista'
+      ok = false
+    }
     if (!ok) return
 
     const btn = form.querySelector('button[type=submit]')
@@ -69,11 +87,11 @@ export function initForm({ form, onSuccess }) {
     btn.textContent = 'Guardando tu lugar…'
 
     try {
-      const founderNumber = await registrar({ nombre, whatsapp, localidad })
+      const founderNumber = await registrar({ nombre, whatsapp, localidad, localidadDetalle })
       trackEvent('form_submit', { localidad })
       analyticsEvent('form_submit')
       flagSession('submitted')
-      updateSession({ localidad })
+      updateSession(localidadDetalle ? { localidad, localidad_detalle: localidadDetalle } : { localidad })
       onSuccess({ founderNumber, duplicado: false })
     } catch (err) {
       if (err && err.code === 'permission-denied') {
@@ -88,7 +106,7 @@ export function initForm({ form, onSuccess }) {
   })
 }
 
-async function registrar({ nombre, whatsapp, localidad }) {
+async function registrar({ nombre, whatsapp, localidad, localidadDetalle }) {
   const counterRef = doc(db, 'public', 'counters')
   const registroRef = doc(db, 'registros', whatsapp)
 
@@ -107,6 +125,7 @@ async function registrar({ nombre, whatsapp, localidad }) {
       nombre,
       whatsapp,
       localidad,
+      ...(localidadDetalle ? { localidad_detalle: localidadDetalle } : {}),
       respuestas: { ...respuestas, extras: [...extrasElegidos] },
       founderNumber,
       session_id: sessionId,

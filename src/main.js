@@ -2,8 +2,8 @@
 import './styles.css'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { db } from './firebase.js'
-import { PRECIOS } from './config.js'
-import { startTracking, initAnalytics, trackEvent, flagSession } from './tracking.js'
+import { PRECIOS_VARIANTES } from './config.js'
+import { startTracking, initAnalytics, trackEvent, flagSession, updateSession } from './tracking.js'
 import { renderSurvey, renderExtras } from './survey.js'
 import { initForm } from './form.js'
 import { initShare } from './share.js'
@@ -11,10 +11,19 @@ import { initShare } from './share.js'
 startTracking()
 initAnalytics()
 
-// Precios desde config
+// Test de elasticidad: variante de precio al azar, fija por sesión
+const VARIANTES = Object.keys(PRECIOS_VARIANTES)
+let variante = sessionStorage.getItem('solar_precio_var')
+if (!VARIANTES.includes(variante)) {
+  variante = VARIANTES[Math.floor(Math.random() * VARIANTES.length)]
+  sessionStorage.setItem('solar_precio_var', variante)
+  updateSession({ precio_variante: variante })
+}
+
 const fmt = (n) => `$${n.toLocaleString('es-AR')}`
-document.querySelector('#precio-entrada').textContent = fmt(PRECIOS.entrada)
-document.querySelector('#precio-combo').textContent = fmt(PRECIOS.combo)
+const precios = PRECIOS_VARIANTES[variante]
+document.querySelector('#precio-entrada').textContent = fmt(precios.entrada)
+document.querySelector('#precio-combo').textContent = fmt(precios.combo)
 
 // Contador vivo de fundadores (public/counters)
 onSnapshot(doc(db, 'public', 'counters'), (snap) => {
@@ -35,7 +44,7 @@ document.querySelector('#cta-hero').addEventListener('click', () => {
 })
 
 document.querySelector('#cta-precio').addEventListener('click', (e) => {
-  trackEvent('cta_click', { cta_id: 'precio' })
+  trackEvent('cta_click', { cta_id: 'precio', precio_variante: variante })
   flagSession('cta_precio')
   e.target.classList.add('cta--confirmado')
   e.target.textContent = '¡Anotado! Sumate a la lista acá abajo 👇'

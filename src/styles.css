@@ -209,6 +209,13 @@ h1, h2, h3 {
 
 .pregunta h3 { font-size: 1.125rem; margin-bottom: 0.25rem; }
 
+.pregunta__hint {
+  font-family: var(--body);
+  font-weight: 400;
+  font-size: 0.8125rem;
+  color: var(--muted-2);
+}
+
 .pregunta__sub { color: var(--muted-2); font-size: 0.875rem; margin-bottom: 0.5rem; }
 
 .pregunta .chips { margin-top: 0.75rem; }
@@ -272,6 +279,19 @@ h1, h2, h3 {
   border-color: var(--naranja);
 }
 
+#ciudad-otra { margin-top: 0.875rem; }
+
+#ciudad-select {
+  width: 100%;
+  font-family: var(--body);
+  font-size: 1.0625rem;
+  padding: 0.875rem 1rem;
+  border: 1.5px solid rgba(34, 28, 21, 0.25);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+}
+
 .seccion--registro .chip {
   background: #fff;
   color: var(--ink);
@@ -314,6 +334,16 @@ h1, h2, h3 {
 }
 
 .footer img { opacity: 0.7; margin-bottom: 0.75rem; }
+
+.footer__admin { margin-top: 1.25rem; }
+
+.footer__admin a {
+  color: rgba(111, 103, 92, 0.55);
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.footer__admin a:hover { color: var(--muted); text-decoration: underline; }
 
 /* ── Desktop ────────────────────────────────────────────────────────────── */
 @media (min-width: 720px) {
