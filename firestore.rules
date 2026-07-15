@@ -1,0 +1,146 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Único lector de datos: el usuario admin del dashboard
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.uid == 'ntsd3ChxFcTa2i0v8yepeawgb6s2';
+    }
+
+    function str(v, max) {
+      return v is string && v.size() > 0 && v.size() <= max;
+    }
+
+    // UTMs opcionales, siempre strings acotados
+    function utmOk(d) {
+      return (!('utm_source' in d) || str(d.utm_source, 100))
+        && (!('utm_medium' in d) || str(d.utm_medium, 100))
+        && (!('utm_campaign' in d) || str(d.utm_campaign, 100))
+        && (!('utm_content' in d) || str(d.utm_content, 100));
+    }
+
+    function localidadOk(v) {
+      return v in ['oran', 'pichanal', 'hipolito_yrigoyen', 'colonia_santa_rosa', 'otro'];
+    }
+
+    function surveyOk(s) {
+      return s is map
+        && s.keys().hasOnly(['frecuencia', 'compania', 'horario', 'genero', 'extras'])
+        && (!('frecuencia' in s) || str(s.frecuencia, 30))
+        && (!('compania' in s) || str(s.compania, 30))
+        && (!('horario' in s) || str(s.horario, 30))
+        && (!('genero' in s) || str(s.genero, 30))
+        && (!('extras' in s) || (s.extras is list && s.extras.size() <= 8));
+    }
+
+    // ── Contador público de fundadores ────────────────────────────────────
+    match /public/counters {
+      allow get: if true;
+      allow create: if request.resource.data.keys().hasOnly(['founders'])
+        && request.resource.data.founders == 1;
+      allow update: if request.resource.data.keys().hasOnly(['founders'])
+        && request.resource.data.founders == resource.data.founders + 1;
+      allow delete: if false;
+    }
+
+    // ── Log crudo de eventos (append-only) ────────────────────────────────
+    match /events/{eventId} {
+      allow read: if isAdmin();
+      allow create: if request.resource.data.keys().hasOnly(
+          ['type', 'session_id', 'ts', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'payload'])
+        && request.resource.data.type in
+          ['page_view', 'scroll_50', 'scroll_75', 'scroll_100', 'heartbeat_15s',
+           'cta_click', 'survey_answer', 'form_submit', 'share_click']
+        && str(request.resource.data.session_id, 64)
+        && request.resource.data.ts == request.time
+        && utmOk(request.resource.data)
+        && (!('payload' in request.resource.data)
+            || (request.resource.data.payload is map
+                && request.resource.data.payload.keys().size() <= 5));
+      allow update, delete: if false;
+    }
+
+    // ── Sesiones: create al entrar, updates limitados a flags/contadores ──
+    match /sessions/{sessionId} {
+      function affected(field) {
+        return request.resource.data.diff(resource.data).affectedKeys().hasAny([field]);
+      }
+      function affectedOnly(fields) {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+      }
+      function boolUp(field) {
+        return !affected(field) || request.resource.data[field] == true;
+      }
+      function secondsOk() {
+        return !affected('seconds')
+          || (request.resource.data.seconds == resource.data.seconds + 15
+              && request.resource.data.seconds <= 1800);
+      }
+
+      allow read: if isAdmin();
+
+      allow create: if sessionId.size() <= 64
+        && request.resource.data.keys().hasOnly(
+          ['ts', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content',
+           'seconds', 'scroll_50', 'scroll_75', 'scroll_100', 'vio_precio',
+           'cta_hero', 'cta_precio', 'shared', 'submitted', 'survey'])
+        && request.resource.data.ts == request.time
+        && utmOk(request.resource.data)
+        && request.resource.data.seconds == 0
+        && request.resource.data.scroll_50 == false
+        && request.resource.data.scroll_75 == false
+        && request.resource.data.scroll_100 == false
+        && request.resource.data.vio_precio == false
+        && request.resource.data.cta_hero == false
+        && request.resource.data.cta_precio == false
+        && request.resource.data.shared == false
+        && request.resource.data.submitted == false
+        && request.resource.data.survey is map
+        && request.resource.data.survey.size() == 0;
+
+      allow update: if affectedOnly(
+          ['seconds', 'scroll_50', 'scroll_75', 'scroll_100', 'vio_precio',
+           'cta_hero', 'cta_precio', 'shared', 'submitted', 'survey', 'localidad'])
+        && secondsOk() && boolUp('scroll_50') && boolUp('scroll_75')
+        && boolUp('scroll_100') && boolUp('vio_precio') && boolUp('cta_hero')
+        && boolUp('cta_precio') && boolUp('shared') && boolUp('submitted')
+        && (!affected('survey') || surveyOk(request.resource.data.survey))
+        && (!affected('localidad') || localidadOk(request.resource.data.localidad));
+
+      allow delete: if false;
+    }
+
+    // ── Registros de la Lista Fundadora (doc id = WhatsApp E.164) ─────────
+    match /registros/{whatsapp} {
+      allow read: if isAdmin();
+
+      // Solo create: un set sobre un doc existente es update → rechazado.
+      // Eso hace que la transacción entera (counter + registro) falle en
+      // duplicados sin permitir leer registros ajenos.
+      allow create: if whatsapp.matches('^\\+549[0-9]{10}$')
+        && request.resource.data.keys().hasOnly(
+          ['nombre', 'whatsapp', 'localidad', 'respuestas', 'founderNumber',
+           'session_id', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ts'])
+        && str(request.resource.data.nombre, 80)
+        && request.resource.data.whatsapp == whatsapp
+        && localidadOk(request.resource.data.localidad)
+        && surveyOk(request.resource.data.respuestas)
+        && request.resource.data.founderNumber is int
+        && request.resource.data.founderNumber > 0
+        && request.resource.data.founderNumber ==
+            getAfter(/databases/$(database)/documents/public/counters).data.founders
+        && str(request.resource.data.session_id, 64)
+        && utmOk(request.resource.data)
+        && request.resource.data.ts == request.time;
+
+      allow update, delete: if false;
+    }
+
+    // Todo lo demás, cerrado
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

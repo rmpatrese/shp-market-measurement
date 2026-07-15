@@ -1,0 +1,13 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <g fill="#E8721E" transform="translate(50 50) scale(0.42) translate(-50 -50)">
+    <path d="M 67.64 46.41 L 87.73 42.32 A 38.5 38.5 0 0 1 87.73 57.68 L 67.64 53.59 A 18 18 0 0 0 67.64 46.41 Z" id="tg"></path>
+    <use href="#tg" transform="rotate(45 50 50)"></use>
+    <use href="#tg" transform="rotate(90 50 50)"></use>
+    <use href="#tg" transform="rotate(135 50 50)"></use>
+    <use href="#tg" transform="rotate(180 50 50)"></use>
+    <use href="#tg" transform="rotate(225 50 50)"></use>
+    <use href="#tg" transform="rotate(270 50 50)"></use>
+    <use href="#tg" transform="rotate(315 50 50) translate(7 0)"></use>
+    <circle cx="50" cy="50" r="6.5"></circle>
+  </g>
+</svg>

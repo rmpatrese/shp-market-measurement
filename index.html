@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SOLAR — El cine vuelve a Orán</title>
+  <meta name="description" content="Estamos evaluando traer un cine de estrenos a Orán. Sumate a la Lista Fundadora y ayudanos a decidir." />
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+
+  <meta property="og:title" content="SOLAR — El cine vuelve a Orán" />
+  <meta property="og:description" content="¿Y si el cine vuelve a Orán? Sumate a la Lista Fundadora y ayudanos a hacerlo realidad." />
+  <meta property="og:url" content="https://cineoran.com/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://cineoran.com/og.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Mulish:wght@400;600;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- 1 · Hero -->
+  <header class="hero" id="hero">
+    <img src="/logo.svg" alt="" class="hero__sol" width="72" height="72" />
+    <p class="hero__marca">SOLAR</p>
+    <span class="badge">Estamos evaluando · vos decidís</span>
+    <h1>El cine vuelve<br />a Orán</h1>
+    <p class="hero__sub">Ayudanos a hacerlo realidad. Si somos suficientes, se construye.</p>
+    <button class="cta cta--primario" id="cta-hero">Quiero mi lugar en la Lista Fundadora</button>
+    <p class="contador">Ya somos <strong class="contador-fundadores">—</strong> en la Lista Fundadora</p>
+  </header>
+
+  <!-- 2 · Qué va a haber -->
+  <section class="seccion" id="que-va-a-haber">
+    <h2>Así lo estamos pensando</h2>
+    <div class="tarjetas">
+      <article class="tarjeta">
+        <span class="tarjeta__icono">🎬</span>
+        <h3>Estrenos el mismo día</h3>
+        <p>Las películas llegan a Orán el mismo día que a Buenos Aires. Sin esperar meses.</p>
+      </article>
+      <article class="tarjeta">
+        <span class="tarjeta__icono">🕶️</span>
+        <h3>Sala 3D con sonido envolvente</h3>
+        <p>Pantalla gigante, butacas cómodas y un sonido que se siente en el pecho.</p>
+      </article>
+      <article class="tarjeta">
+        <span class="tarjeta__icono">🍿</span>
+        <h3>Candy bar</h3>
+        <p>Pochoclos recién hechos, bebidas y golosinas. El olorcito del cine de verdad.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- 3 · Precio de referencia -->
+  <section class="seccion seccion--precio" id="precio">
+    <h2>Hablemos de precios, en serio</h2>
+    <p class="seccion__sub">Para que el cine sea posible, los números tienen que cerrar. Esta es la referencia:</p>
+    <div class="precio__valores">
+      <div class="precio__item">
+        <span class="precio__label">Entrada estimada</span>
+        <span class="precio__monto" id="precio-entrada">—</span>
+      </div>
+      <div class="precio__item">
+        <span class="precio__label">Combo pochoclo + bebida</span>
+        <span class="precio__monto" id="precio-combo">—</span>
+      </div>
+    </div>
+    <button class="cta cta--secundario" id="cta-precio">A ese precio, cuento conmigo ✋</button>
+    <p class="nota">Tocá el botón solo si de verdad pagarías eso — nos ayuda a medir bien.</p>
+  </section>
+
+  <!-- 4 · Micro-encuesta + extras -->
+  <section class="seccion" id="encuesta">
+    <h2>Contanos cómo lo vivirías vos</h2>
+    <p class="seccion__sub">Cuatro toques, sin escribir nada.</p>
+    <div id="encuesta-preguntas"></div>
+  </section>
+
+  <!-- 5 · Registro -->
+  <section class="seccion seccion--registro" id="registro">
+    <div id="registro-card">
+      <h2>Sumate a la Lista Fundadora</h2>
+      <p class="seccion__sub">Si el cine avanza, los fundadores se enteran primero y tienen beneficios de apertura. Sin spam: solo te escribimos si esto pasa.</p>
+      <form id="form-registro" novalidate>
+        <label for="nombre">Tu nombre</label>
+        <input type="text" id="nombre" name="nombre" autocomplete="name" placeholder="Nombre y apellido" maxlength="80" />
+        <p class="error" id="error-nombre"></p>
+
+        <label for="whatsapp">Tu WhatsApp</label>
+        <input type="tel" id="whatsapp" name="whatsapp" autocomplete="tel" inputmode="tel" placeholder="3878 123456" />
+        <p class="error" id="error-whatsapp"></p>
+
+        <span class="label">¿De dónde sos?</span>
+        <div class="chips" id="chips-localidad">
+          <button type="button" class="chip" data-localidad="oran">Orán</button>
+          <button type="button" class="chip" data-localidad="pichanal">Pichanal</button>
+          <button type="button" class="chip" data-localidad="hipolito_yrigoyen">H. Yrigoyen</button>
+          <button type="button" class="chip" data-localidad="colonia_santa_rosa">C. Santa Rosa</button>
+          <button type="button" class="chip" data-localidad="otro">Otro</button>
+        </div>
+        <p class="error" id="error-localidad"></p>
+
+        <button type="submit" class="cta cta--primario">Quiero mi lugar</button>
+        <p class="nota">Estamos evaluando traer un cine de estrenos a Orán. Tu registro nos ayuda a decidir — no es una compra ni una reserva paga.</p>
+      </form>
+    </div>
+
+    <!-- 7 · Gracias (reemplaza al form) -->
+    <div id="gracias" hidden>
+      <span class="gracias__icono">🎬</span>
+      <h2 id="gracias-titulo">¡Listo! Sos el fundador <strong id="numero-fundador">#—</strong></h2>
+      <p class="seccion__sub" id="gracias-sub">Tu lugar en la historia del cine de Orán está guardado. Te escribimos por WhatsApp solo si el proyecto avanza.</p>
+      <button class="cta cta--secundario btn-compartir">Invitá a alguien que extrañe el cine 💌</button>
+    </div>
+  </section>
+
+  <!-- 6 · Compartir -->
+  <section class="seccion seccion--compartir" id="compartir">
+    <h2>¿Conocés a alguien que extrañe el cine?</h2>
+    <p class="seccion__sub">Cuanta más gente se sume, más cerca está la primera función.</p>
+    <button class="cta cta--primario btn-compartir">Invitá a alguien que extrañe el cine</button>
+  </section>
+
+  <footer class="footer">
+    <img src="/logo.svg" alt="" width="28" height="28" />
+    <p>SOLAR es un proyecto en evaluación para San Ramón de la Nueva Orán, Salta.<br />Hecho con ganas de volver al cine. 🧡</p>
+  </footer>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
