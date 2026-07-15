@@ -13,6 +13,9 @@ export const firebaseConfig = {
   appId: '1:38422068154:web:9cfc394ebd459e780dfb83',
 }
 
+// Base con nombre (decisión del 2026-07-15; ojo: el tier gratuito es solo de la default)
+export const FIRESTORE_DB_ID = 'db-shp-market-measurement'
+
 // IDs de analítica — reemplazar por los reales antes de lanzar la pauta.
 // Mientras contengan 'XXXX' los loaders no cargan nada (stub).
 export const GA4_ID = 'G-XXXXXXXXXX'

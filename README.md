@@ -16,10 +16,13 @@ npm run build          # build a dist/
 
 **Automático:** cada push a `main` buildea y deploya hosting + reglas de Firestore
 (workflow `.github/workflows/deploy.yml`). Los PRs generan un canal de preview con
-URL temporal.
+URL temporal (7 días).
 
-Requiere el secret `FIREBASE_SERVICE_ACCOUNT` en el repo de GitHub (JSON de un
-service account del proyecto `shp-market-measurement` con rol Firebase Admin).
+Autenticación **sin claves** por Workload Identity Federation: el pool `github` /
+provider `github-oidc` del proyecto acepta OIDC solo del repo
+`rmpatrese/shp-market-measurement` e impersona al service account
+`github-deploy@shp-market-measurement.iam.gserviceaccount.com` (rol Firebase Admin).
+No hay secrets que rotar.
 
 **Manual (fallback):**
 
@@ -51,7 +54,10 @@ WhatsApp/Facebook — usar un render de la sala con el logo.
 
 ## Firestore
 
-- Base en **modo producción**, región `southamerica-east1`.
+- Base **con nombre** `db-shp-market-measurement`, modo producción, región
+  `southamerica-east1`. ⚠️ El tier gratuito de Firestore aplica solo a la base
+  `(default)`: esta base factura todo uso (a escala de la validación son centavos,
+  pero conviene mirar la facturación).
 - Colecciones: `sessions` (una por visita, con flags de KPI), `events` (log crudo),
   `registros` (doc id = WhatsApp E.164, anti-duplicados), `public/counters`
   (contador de fundadores, lectura pública, se auto-crea con el primer registro).
