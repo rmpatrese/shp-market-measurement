@@ -19,7 +19,7 @@ export const FIRESTORE_DB_ID = 'db-shp-market-measurement'
 // IDs de analítica — reemplazar por los reales antes de lanzar la pauta.
 // Mientras contengan 'XXXX' los loaders no cargan nada (stub).
 export const GA4_ID = 'G-XXXXXXXXXX'
-export const META_PIXEL_ID = '913223684399223'
+export const META_PIXEL_ID = '1046760758219836'
 
 // ⚠️ PRECIOS DE REFERENCIA — reemplazar por los definitivos antes de lanzar.
 // Test de elasticidad: cada sesión ve UNA variante al azar; el admin compara
