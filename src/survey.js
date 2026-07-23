@@ -1,6 +1,6 @@
 // ── Micro-encuesta: chips simples o multi-select según config + extras ─────
 import { ENCUESTA, EXTRAS } from './config.js'
-import { trackEvent, updateSession } from './tracking.js'
+import { trackEvent, updateSession, metaCustomEvent } from './tracking.js'
 
 // frecuencia: string · compania/horario/genero: arrays
 export const respuestas = {}
@@ -13,6 +13,7 @@ function chipMulti({ chips, chip, op, q, seleccion }) {
   chip.classList.toggle('chip--on', on)
   chip.setAttribute('aria-pressed', String(on))
   trackEvent('survey_answer', { q, value: op.id, on })
+  if (on) metaCustomEvent('ChipVote', { chip: op.id })
   return [...seleccion]
 }
 
@@ -42,6 +43,7 @@ export function renderSurvey(container) {
         chip.setAttribute('role', 'radio')
         chip.setAttribute('aria-checked', 'false')
         chip.addEventListener('click', () => {
+          if (respuestas[pregunta.q] === op.id) return
           chips.querySelectorAll('.chip').forEach((c) => {
             c.classList.remove('chip--on')
             c.setAttribute('aria-checked', 'false')
@@ -50,6 +52,7 @@ export function renderSurvey(container) {
           chip.setAttribute('aria-checked', 'true')
           respuestas[pregunta.q] = op.id
           trackEvent('survey_answer', { q: pregunta.q, value: op.id })
+          metaCustomEvent('ChipVote', { chip: op.id })
           updateSession({ [`survey.${pregunta.q}`]: op.id })
         })
       }

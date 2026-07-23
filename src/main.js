@@ -1,9 +1,12 @@
 // ── Orquestación de la landing ─────────────────────────────────────────────
 import './styles.css'
-import { doc, onSnapshot } from 'firebase/firestore'
+import { doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from './firebase.js'
 import { PRECIOS_VARIANTES } from './config.js'
-import { startTracking, initAnalytics, trackEvent, flagSession, updateSession } from './tracking.js'
+import {
+  startTracking, initAnalytics, trackEvent, flagSession, updateSession,
+  sessionId, sessionUtm, metaCustomEvent,
+} from './tracking.js'
 import { renderSurvey, renderExtras } from './survey.js'
 import { initForm } from './form.js'
 import { initShare } from './share.js'
@@ -43,13 +46,80 @@ document.querySelector('#cta-hero').addEventListener('click', () => {
   irAlForm()
 })
 
-document.querySelector('#cta-precio').addEventListener('click', (e) => {
-  trackEvent('cta_click', { cta_id: 'precio', precio_variante: variante })
-  flagSession('cta_precio')
-  e.target.classList.add('cta--confirmado')
-  e.target.textContent = '¡Anotado! Sumate a la lista acá abajo 👇'
-  irAlForm()
-})
+// ── Voto de precio: primero queda guardado en votos_precio; el pixel
+// (PriceVote) se dispara recién en el éxito del guardado, nunca en el click ─
+const btnSi = document.querySelector('#cta-precio')
+const btnNo = document.querySelector('#voto-precio-no')
+const TEXTO_SI = btnSi.textContent
+const TEXTO_NO = btnNo.textContent
+let votoGuardado = sessionStorage.getItem('solar_voto_precio')
+let votoEnCurso = false
+
+function pintarVotoGuardado() {
+  btnSi.disabled = true
+  btnNo.disabled = true
+  if (votoGuardado === 'si') {
+    btnSi.classList.add('cta--confirmado')
+    btnSi.textContent = '¡Anotado! Sumate a la lista acá abajo 👇'
+    btnNo.hidden = true
+  } else {
+    btnNo.textContent = 'Anotado — gracias por la sinceridad 🧡'
+  }
+}
+if (votoGuardado) pintarVotoGuardado()
+
+async function votarPrecio(vote) {
+  if (votoGuardado || votoEnCurso) return
+  votoEnCurso = true
+  const btnVoto = vote === 'si' ? btnSi : btnNo
+  btnSi.disabled = true
+  btnNo.disabled = true
+  btnVoto.textContent = 'Guardando…'
+  trackEvent('cta_click', { cta_id: vote === 'si' ? 'precio' : 'precio_no', precio_variante: variante })
+
+  try {
+    // doc id = session id + rules solo-create → un voto por sesión, sin dobles
+    await setDoc(doc(db, 'votos_precio', sessionId), {
+      vote,
+      variante,
+      precio_entrada: precios.entrada,
+      precio_combo: precios.combo,
+      session_id: sessionId,
+      ...sessionUtm,
+      ts: serverTimestamp(),
+    })
+  } catch (err) {
+    votoEnCurso = false
+    if (err && err.code === 'permission-denied') {
+      // Esta sesión ya votó (p. ej. en otra pestaña): cerrar la UI sin re-disparar
+      votoGuardado = vote
+      sessionStorage.setItem('solar_voto_precio', vote)
+      pintarVotoGuardado()
+    } else {
+      btnSi.disabled = false
+      btnNo.disabled = false
+      btnSi.textContent = TEXTO_SI
+      btnNo.textContent = TEXTO_NO
+    }
+    return
+  }
+
+  votoEnCurso = false
+  votoGuardado = vote
+  sessionStorage.setItem('solar_voto_precio', vote)
+  metaCustomEvent('PriceVote', {
+    vote,
+    variante,
+    precio_entrada: precios.entrada,
+    precio_combo: precios.combo,
+  })
+  if (vote === 'si') flagSession('cta_precio')
+  pintarVotoGuardado()
+  if (vote === 'si') irAlForm()
+}
+
+btnSi.addEventListener('click', () => votarPrecio('si'))
+btnNo.addEventListener('click', () => votarPrecio('no'))
 
 // La sección precio entró al viewport → vio_precio (denominador de intención de pago)
 new IntersectionObserver((entries, obs) => {

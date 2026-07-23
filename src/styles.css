@@ -204,6 +204,21 @@ h1, h2, h3 {
   color: var(--bg);
 }
 
+.voto-no {
+  display: block;
+  margin: 0.875rem auto 0;
+  background: none;
+  border: none;
+  color: var(--muted-2);
+  font-family: var(--body);
+  font-size: 0.875rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.voto-no:disabled { text-decoration: none; cursor: default; }
+
 /* ── Encuesta: chips ────────────────────────────────────────────────────── */
 .pregunta { margin-bottom: 2rem; }
 

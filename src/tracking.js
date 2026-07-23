@@ -23,13 +23,16 @@ function initSession() {
 
 function initUtm() {
   const saved = sessionStorage.getItem(UTM_KEY)
-  if (saved) return JSON.parse(saved)
-  const params = new URLSearchParams(location.search)
-  const utm = {}
-  for (const f of UTM_FIELDS) {
-    const v = params.get(f)
-    if (v) utm[f] = v.slice(0, 100)
+  const utm = saved ? JSON.parse(saved) : {}
+  if (!saved) {
+    const params = new URLSearchParams(location.search)
+    for (const f of UTM_FIELDS) {
+      const v = params.get(f)
+      if (v) utm[f] = v.slice(0, 100)
+    }
   }
+  // Sin utm_source → orgánico: todo voto/registro queda clasificable en el admin
+  if (!utm.utm_source) utm.utm_source = 'organic'
   sessionStorage.setItem(UTM_KEY, JSON.stringify(utm))
   return utm
 }
@@ -38,6 +41,7 @@ const { sid, isNew } = initSession()
 const utm = initUtm()
 
 export const sessionId = sid
+export const sessionUtm = utm
 
 // ── API de eventos ──────────────────────────────────────────────────────────
 export function trackEvent(type, payload) {
@@ -145,4 +149,9 @@ export function initAnalytics() {
 export function analyticsEvent(name) {
   if (ga4Active && window.gtag) window.gtag('event', name)
   if (pixelActive && window.fbq && name === 'form_submit') window.fbq('track', 'Lead')
+}
+
+// Eventos custom del pixel (PriceVote, ChipVote). Solo ids/números — nunca PII.
+export function metaCustomEvent(name, params) {
+  if (pixelActive && window.fbq) window.fbq('trackCustom', name, params)
 }

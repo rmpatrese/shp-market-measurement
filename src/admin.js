@@ -80,7 +80,7 @@ async function cargarDashboard() {
   ])
 
   initCpl()
-  await Promise.all([renderCurvas(), renderVariantes(), renderExtras(), renderLocalidades()])
+  await Promise.all([renderCurvas(), renderVariantes(), renderVotos(), renderExtras(), renderLocalidades()])
   $('#btn-soporte').addEventListener('click', cargarSoporte, { once: true })
 }
 
@@ -209,6 +209,32 @@ async function renderVariantes() {
       <div class="kpi__valor">${vieron ? pct(clickearon / vieron) : '—'}</div>
       <div class="kpi__detalle">${clickearon} de ${vieron} que vieron el precio</div>
     </div>`).join('')
+}
+
+// ── Votos de precio: sí/no por variante, pauta vs orgánico ──────────────────
+async function renderVotos() {
+  const snap = await getDocs(collection(db, 'votos_precio'))
+  const votos = snap.docs.map((d) => d.data())
+  const esPauta = (x) => !!x.utm_source && x.utm_source !== 'organic'
+
+  const filas = Object.keys(PRECIOS_VARIANTES).map((v) => {
+    const del = votos.filter((x) => x.variante === v)
+    const si = del.filter((x) => x.vote === 'si').length
+    const pauta = del.filter(esPauta).length
+    return { label: `Variante ${v}`, si, no: del.length - si, pauta, org: del.length - pauta }
+  })
+  filas.push({
+    label: '<strong>Total</strong>',
+    si: filas.reduce((a, f) => a + f.si, 0),
+    no: filas.reduce((a, f) => a + f.no, 0),
+    pauta: filas.reduce((a, f) => a + f.pauta, 0),
+    org: filas.reduce((a, f) => a + f.org, 0),
+  })
+
+  $('#tabla-votos tbody').innerHTML = filas.map((f) => `<tr>
+    <td>${f.label}</td><td>${f.si}</td><td>${f.no}</td>
+    <td>${f.si + f.no ? pct(f.si / (f.si + f.no)) : '—'}</td>
+    <td>${f.pauta}</td><td>${f.org}</td></tr>`).join('')
 }
 
 // ── Barras: extras y localidades ────────────────────────────────────────────

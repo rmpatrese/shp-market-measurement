@@ -149,6 +149,28 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // ── Votos de precio (doc id = session id → un solo voto por sesión) ───
+    match /votos_precio/{sessionId} {
+      allow read: if isAdmin();
+
+      // Solo create: el segundo intento de la misma sesión falla → sin dobles
+      allow create: if sessionId.size() <= 64
+        && request.resource.data.keys().hasOnly(
+          ['vote', 'variante', 'precio_entrada', 'precio_combo', 'session_id',
+           'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ts'])
+        && request.resource.data.vote in ['si', 'no']
+        && request.resource.data.variante in ['A', 'B', 'C', 'D', 'E']
+        && request.resource.data.precio_entrada is int
+        && request.resource.data.precio_entrada > 0
+        && request.resource.data.precio_combo is int
+        && request.resource.data.precio_combo > 0
+        && request.resource.data.session_id == sessionId
+        && utmOk(request.resource.data)
+        && request.resource.data.ts == request.time;
+
+      allow update, delete: if false;
+    }
+
     // Todo lo demás, cerrado
     match /{document=**} {
       allow read, write: if false;
